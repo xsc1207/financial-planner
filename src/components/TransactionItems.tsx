@@ -1,23 +1,50 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { deleteSavings } from '@/storage/savings';
+import { Alert, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 type ItemProps = {
+  id: string;
   name: string;
   types: string;
   value: string;
+  onDelete: () => void;
 };
 
+  const currentDate = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
 export default function TransactionItems({
+  id,
   name,
   types,
   value,
+  onDelete,
 }: ItemProps) {
+  const handleLongPress = () => {
+    Alert.alert('Delete Meal', `Are you sure you want to delete "${name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteSavings(id);
+          onDelete();
+        },
+      },
+    ]);
+  };
+
+
+
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container} onLongPress={handleLongPress}>
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.macros}>
-        {types}  • £ {value} 
+        {types}  • £{value} • {currentDate}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 

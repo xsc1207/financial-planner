@@ -1,3 +1,4 @@
+import { colors } from '@/styles/global';
 import { StyleSheet, Text, View } from 'react-native';
 
 
@@ -7,13 +8,17 @@ type MacroCardProps = {
   value: string;
   goal: string;
   color: string;
+  deadline?: string;
 };
+
+
 
 export default function SavingsItem({
   label,
   value,
   goal,
   color,
+  deadline,
 }: MacroCardProps) {
   const savedNumber = Number(value.replace(/,/g, ''));
   const goalNumber = Number(goal.replace(/,/g, ''));
@@ -21,15 +26,20 @@ export default function SavingsItem({
   const percent =
   goalNumber > 0 ? Math.round((savedNumber / goalNumber) * 100) : 0;
 
+  const formatMoney = (amount: number) => {
+    return amount.toLocaleString('en-GB');
+  };
+
   return (
     <View style={[styles.card, { borderLeftColor: color }]}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.valueRow}>
-        <Text style={styles.value}>{value}</Text>
-        <Text style={styles.slash}> / </Text>
-        <Text style={styles.goal}>{goal}</Text>
+        <Text style={styles.value}>£{formatMoney(savedNumber)}{' '}</Text>
+        <Text style={styles.slash}>/ </Text>
+        <Text style={styles.goal}>£{formatMoney(goalNumber)}</Text>
       </View>
       <Text style={styles.complete}>{percent}% Complete</Text>
+      {deadline && <Text style={styles.deadline}>{deadline}</Text>}
     </View>
   );
 }
@@ -37,8 +47,8 @@ export default function SavingsItem({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#16213e',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     width: '48%',
     borderLeftWidth: 3,
   },
@@ -47,13 +57,13 @@ const styles = StyleSheet.create({
     color: '#a0a0b0',
   },
   value: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
     marginTop: 4,
   },
   goal: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#a0a0b0',
     marginTop: 2,
   },
@@ -74,6 +84,12 @@ const styles = StyleSheet.create({
     color: '#aaa8bd',
     fontSize: 14,
     marginTop: 4,
+  },
+
+  deadline: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 6,
   },
 
 });
