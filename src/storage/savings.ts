@@ -58,3 +58,13 @@ export const addSavings = async (
     throw error;
   }
 };
+
+export const deleteSavings = async (id: string): Promise<void> => {
+  const savings = await getSavings();
+  const filtered = savings.filter((savings) => savings.id !== id);
+  await AsyncStorage.setItem(SAVINGS_KEY, JSON.stringify(filtered));
+};
+
+export const clearAllSavings = async (): Promise<void> => {
+  await AsyncStorage.removeItem(SAVINGS_KEY);
+};

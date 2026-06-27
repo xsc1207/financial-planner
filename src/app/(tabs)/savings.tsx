@@ -1,52 +1,90 @@
 import HomeHeader from '@/components/HomeHeader';
+import MonthlySavingsGrid from '@/components/MonthlySavingsGrid';
+import OverallSavingsGrid from '@/components/OverallSavingsGrid';
 import RecentTransactions from '@/components/RecentTransactions';
-import SavingsGrid from '@/components/SavingsGrid';
-import { Savings, getSavings } from '@/storage/savings';
-import { globalStyles } from '@/styles/global';
-import { Link, useFocusEffect } from 'expo-router';
+import { Goal, getGoals } from '@/storage/goals';
+import { Savings, clearAllSavings, getSavings } from '@/storage/savings';
+import { colors, globalStyles } from '@/styles/global';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function SavingsScreen() {
-  const [savings, setSavings] = useState<Savings[]>([]);
+    const [savings, setSavings] = useState<Savings[]>([]);
+    const [goals, setGoals] = useState<Goal[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const loadSavings = async () => {
+    const loadSavings = async () => {
         const data = await getSavings();
-        console.log('Loaded savings in savings page:', data);
+        const goalsData = await getGoals();
+
         setSavings(data);
-      };
+        console.log('Loaded Savings:', data);
+        setGoals(goalsData);
+        console.log('Loaded Goals:', goalsData)
+    
+    };
 
-      loadSavings();
-    }, [])
-  );
+    const handleClearAll = async () => {
+        await clearAllSavings();
+        loadSavings();
+    };
 
-  return (
-    <ScrollView style={globalStyles.container}>
-      <Text style={globalStyles.title}>Savings Goals</Text>
+    useFocusEffect(
+        useCallback(() => {
+            loadSavings();
+        }, []),
+    );
 
-      <HomeHeader />
+    return (
+        <ScrollView style={globalStyles.container}>
+            <Text style={globalStyles.title}>Savings Goals</Text>
+            <HomeHeader />
 
-      <Text style={globalStyles.sectionTitle}>Monthly Savings Goals</Text>
+            <TouchableOpacity style={styles.addSavingButton} onPress={() => router.push('/add-savings')}>
+                <Text style={styles.addSavingButtonText}>+ Add Saving</Text>
+            </TouchableOpacity>
 
-      <SavingsGrid />
+            <Text style={globalStyles.sectionTitle}>This Month’s Goals</Text>
+            <MonthlySavingsGrid savings={savings} goals={goals} />
 
-      <Link
-        href="/add-savings"
-        style={{ fontSize: 18, color: '#007bff', paddingTop: 20 }}
-      >
-        Add Savings
-      </Link>
+            <View style={globalStyles.header}>
+                <Text style={globalStyles.sectionTitle}>Overall Goals Summary</Text>
+                <TouchableOpacity onPress={() => router.push('/add-goals')}>
+                    <Text style={styles.manageButton}>Manage Goals</Text>
+                </TouchableOpacity>
+            </View>
+            <OverallSavingsGrid savings={savings} goals={goals} />
 
-      <Link
-        href="/add-savings"
-        style={{ fontSize: 18, color: '#007bff', paddingTop: 20 }}
-      >
-        Add Goals
-      </Link>
-
-      <RecentTransactions savings={savings} />
-    </ScrollView>
-  );
+            <Text style={globalStyles.sectionTitle}>Recent Savings</Text>
+            <RecentTransactions savings={savings} onDelete={loadSavings} />
+        </ScrollView>
+    );
 }
+
+const styles = StyleSheet.create({
+    manageButton: {
+        color: colors.primary,
+        opacity: 0.85,
+        fontSize: 16,
+        
+        marginTop: 20,
+        marginBottom: 16,
+    },
+
+    addSavingButton: {
+        backgroundColor: colors.primary,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 24,
+        marginBottom: 0,
+    },
+      
+    addSavingButtonText: {
+        color: colors.background,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+});
+
+      
