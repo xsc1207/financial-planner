@@ -1,26 +1,40 @@
 import CardGrid from '@/components/CardGrid';
 import HighlightCard from '@/components/HighlightCard';
 import HomeHeader from '@/components/HomeHeader';
-import { getSavings, Savings } from '@/storage/savings';
 import { globalStyles } from '@/styles/global';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
+import { getGoals, Goal } from '@/storage/goals';
+import { getIncome, Income } from '@/storage/income';
+import { getSavings, Savings } from '@/storage/savings';
+
+
+
 export default function HomeScreen() {
   const [savings, setSavings] = useState<Savings[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [income, setIncome] = useState<Income[]>([]);
+
+  const loadData = async () => {
+    const savingsData = await getSavings();
+    const goalsData = await getGoals();
+    const incomeData = await getIncome();
+
+
+    setSavings(savingsData);
+    setGoals(goalsData);
+    setIncome(incomeData);
+  };
 
   useFocusEffect(
     useCallback(() => {
-      const loadSavings = async () => {
-        const data = await getSavings();
-        console.log('Loaded savings in savings page:', data);
-        setSavings(data);
-      };
-
-      loadSavings();
+      loadData();
     }, [])
   );
+
+
 
   return (
     <ScrollView style={globalStyles.container}>
@@ -28,7 +42,7 @@ export default function HomeScreen() {
       <HomeHeader />
       <HighlightCard />
       <Text style={globalStyles.sectionTitle}>Monthly Overview</Text>
-      <CardGrid />
+      <CardGrid income={income} savings={savings} goals={goals} />
       <Text style={globalStyles.sectionTitle}>Budget Health</Text>
       <Text style={styles.text}>You are on track this month.</Text>
     </ScrollView>

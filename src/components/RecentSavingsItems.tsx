@@ -23,7 +23,7 @@ export default function TransactionItems({
   onDelete,
 }: ItemProps) {
   const handleLongPress = () => {
-    Alert.alert('Delete Meal', `Are you sure you want to delete "${name}"?`, [
+    Alert.alert('Delete Savings', `Are you sure you want to delete savings"${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
