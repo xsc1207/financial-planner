@@ -1,14 +1,14 @@
 import { Savings } from '@/storage/savings';
 import { globalStyles } from '@/styles/global';
 import { Text, View } from 'react-native';
-import TransactionItems from './TransactionItems';
+import RecentSavingsItems from './RecentSavingsItems';
 
 type RecentSavingsProps = {
   savings?: Savings[];
   onDelete: () => void;
 };
 
-export default function RecentTransactions({ savings = [], onDelete}: RecentSavingsProps) {
+export default function RecentSavings({ savings = [], onDelete}: RecentSavingsProps) {
   const safeSavings = Array.isArray(savings) ? savings : [];
 
   return (
@@ -18,7 +18,7 @@ export default function RecentTransactions({ savings = [], onDelete}: RecentSavi
         <Text style={globalStyles.empty}>No savings logged yet.</Text>
       ) : (
         safeSavings.slice(0, 5).map((saving) => (
-          <TransactionItems
+          <RecentSavingsItems
             key={saving.id}
             id={saving.id}
             name={saving.name}

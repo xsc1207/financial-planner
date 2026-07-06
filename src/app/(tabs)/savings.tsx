@@ -1,7 +1,7 @@
 import HomeHeader from '@/components/HomeHeader';
 import MonthlySavingsGrid from '@/components/MonthlySavingsGrid';
 import OverallSavingsGrid from '@/components/OverallSavingsGrid';
-import RecentTransactions from '@/components/RecentTransactions';
+import RecentSavings from '@/components/RecentSavings';
 import { Goal, getGoals } from '@/storage/goals';
 import { Savings, clearAllSavings, getSavings } from '@/storage/savings';
 import { colors, globalStyles } from '@/styles/global';
@@ -16,6 +16,8 @@ export default function SavingsScreen() {
     const loadSavings = async () => {
         const data = await getSavings();
         const goalsData = await getGoals();
+
+        
 
         setSavings(data);
         console.log('Loaded Savings:', data);
@@ -36,29 +38,35 @@ export default function SavingsScreen() {
     );
 
     return (
-        <ScrollView style={globalStyles.container}>
-            <Text style={globalStyles.title}>Savings Goals</Text>
-            <HomeHeader />
-
-            <TouchableOpacity style={styles.addSavingButton} onPress={() => router.push('/add-savings')}>
-                <Text style={styles.addSavingButtonText}>+ Add Saving</Text>
+        <ScrollView
+          style={globalStyles.container}
+        >
+          <Text style={globalStyles.title}>Savings Goals</Text>
+          <HomeHeader />
+      
+          <TouchableOpacity
+            style={styles.addSavingButton}
+            onPress={() => router.push('/add-savings')}
+          >
+            <Text style={styles.addSavingButtonText}>+ Add Saving</Text>
+          </TouchableOpacity>
+      
+          <Text style={globalStyles.sectionTitle}>This Month’s Goals</Text>
+          <MonthlySavingsGrid savings={savings} goals={goals} />
+      
+          <View style={globalStyles.header}>
+            <Text style={globalStyles.sectionTitle}>Overall Goals Summary</Text>
+            <TouchableOpacity onPress={() => router.push('/add-goals')}>
+              <Text style={styles.manageButton}>Manage Goals</Text>
             </TouchableOpacity>
-
-            <Text style={globalStyles.sectionTitle}>This Month’s Goals</Text>
-            <MonthlySavingsGrid savings={savings} goals={goals} />
-
-            <View style={globalStyles.header}>
-                <Text style={globalStyles.sectionTitle}>Overall Goals Summary</Text>
-                <TouchableOpacity onPress={() => router.push('/add-goals')}>
-                    <Text style={styles.manageButton}>Manage Goals</Text>
-                </TouchableOpacity>
-            </View>
-            <OverallSavingsGrid savings={savings} goals={goals} />
-
-            <Text style={globalStyles.sectionTitle}>Recent Savings</Text>
-            <RecentTransactions savings={savings} onDelete={loadSavings} />
+          </View>
+      
+          <OverallSavingsGrid savings={savings} goals={goals} />
+      
+          <Text style={globalStyles.sectionTitle}>Recent Savings</Text>
+          <RecentSavings savings={savings} onDelete={loadSavings} />
         </ScrollView>
-    );
+      );
 }
 
 const styles = StyleSheet.create({

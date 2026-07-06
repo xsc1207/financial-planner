@@ -17,9 +17,15 @@ export default function Card({
 }: MacroCardProps) {
   return (
     <View style={[styles.card, { borderLeftColor: color }]}>
-      <Text style={styles.label}>{label}({percentage}%)</Text>
+      {percentage ? (
+  <Text style={styles.label}>{label}({percentage}%)</Text>
+) : (
+  <Text style={styles.label}>{label}</Text>
+)}
       <Text style={styles.value}>{value}</Text>
-      <Text style={styles.goal}>/ {goal}</Text>
+      {goal ? (
+  <Text style={styles.goal}>/ {goal}</Text>
+) : null}
     </View>
   );
 }
@@ -29,7 +35,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#16213e',
     borderRadius: 12,
     padding: 12,
-    width: '48%',
+    width: '100%',
     borderLeftWidth: 4,
     paddingHorizontal: 16,
     paddingVertical: 10,
