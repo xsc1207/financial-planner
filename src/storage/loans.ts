@@ -6,6 +6,7 @@ export type Loans = {
   types: string;
   value: number;
   interestrate: number;
+  yearleft: number;
   createdAt: string;
 };
 
@@ -44,6 +45,7 @@ export const addLoans = async (
       types: loan.types,
       value: Number(loan.value) || 0,
       interestrate: Number(loan.value) || 0,
+      yearleft:  Number(loan.value) || 0,
       createdAt: new Date().toISOString(),
     };
 
