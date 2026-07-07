@@ -1,5 +1,4 @@
-import { Text } from 'expo-router/build/react-navigation';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function HighlightCard() {
   return (
