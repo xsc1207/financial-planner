@@ -1,9 +1,10 @@
 import { colors } from '@/styles/global';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
 type RecentSavingsItemsProps = {
   id: string;
   name: string;
-  types: string;
+  goalName: string;
   value: string;
   date?: string;
   accountType?: 'cash' | 'bank';
@@ -11,11 +12,10 @@ type RecentSavingsItemsProps = {
   onDelete: (id: string) => void;
 };
 
-
 export default function RecentSavingsItems({
   id,
   name,
-  types,
+  goalName,
   value,
   date,
   accountType,
@@ -43,10 +43,18 @@ export default function RecentSavingsItems({
     <TouchableOpacity
       style={styles.card}
       onLongPress={() => {
-        Alert.alert('Delete Income',`Are you sure you want to delete savings "${name}"?`, [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
-        ]);
+        Alert.alert(
+          'Delete Saving',
+          `Are you sure you want to delete saving "${name}"?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Delete',
+              style: 'destructive',
+              onPress: () => onDelete(id),
+            },
+          ],
+        );
       }}
       activeOpacity={0.8}
     >
@@ -56,8 +64,8 @@ export default function RecentSavingsItems({
         </Text>
 
         <Text style={styles.meta} numberOfLines={1}>
-          {formatDate(date)} · {types} ·
-          {accountText ? `  ${accountText}` : ''}
+          {formatDate(date)} · {goalName}
+          {accountText ? ` · ${accountText}` : ''}
         </Text>
       </View>
 
