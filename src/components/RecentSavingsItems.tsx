@@ -15,7 +15,7 @@ type ItemProps = {
     year: 'numeric',
   });
 
-export default function TransactionItems({
+export default function RecentSavingsItems({
   id,
   name,
   types,

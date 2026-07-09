@@ -6,9 +6,9 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
-import { getGoals, Goal } from '@/storage/goals';
 import { getIncome, Income } from '@/storage/income';
 import { getSavings, Savings } from '@/storage/savings';
+import { getGoals, Goal } from '@/storage/savingsgoals';
 
 
 

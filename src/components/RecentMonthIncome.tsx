@@ -23,6 +23,7 @@ export default function RecentIncome({ income = [], onDelete}: RecentIncomeProps
             id={saving.id}
             name={saving.name}
             value={`${saving.value}`}
+            date={saving.date}
             onDelete={onDelete}
           />
         ))

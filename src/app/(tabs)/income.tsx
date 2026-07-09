@@ -1,82 +1,175 @@
-import HomeHeader from '@/components/HomeHeader';
 import OverallMonthIncomeCard from '@/components/OverallMonthIncomeCard';
-import RecentIncome from '@/components/RecentMonthIncome';
-import { Income, clearAllIncome, getIncome } from '@/storage/income';
+import RecentIncomeItems from '@/components/RecentMonthIncomeItems';
+import { Income, deleteIncome, getIncome } from '@/storage/income';
 import { colors, globalStyles } from '@/styles/global';
-import { getThisMonthIncomeTotal } from '@/utils/incomeSummary';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function IncomeScreen() {
-    const [income, setIncome] = useState<Income[]>([]);
+  const [income, setIncome] = useState<Income[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
 
-    const loadIncome = async () => {
-        const data = await getIncome();
+  const loadIncome = async () => {
+    const data = await getIncome();
+    setIncome(data);
+  };
 
-        setIncome(data);
-        console.log('Loaded Income:', data);
-    
-    };
+  useFocusEffect(
+    useCallback(() => {
+      loadIncome();
+    }, [])
+  );
 
-    const handleClearAll = async () => {
-        await clearAllIncome();
-        loadIncome();
-    };
+  const goToPreviousMonth = () => {
+    setSelectedMonth((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() - 1);
+      return newDate;
+    });
+  };
 
-    useFocusEffect(
-        useCallback(() => {
-            loadIncome();
-        }, []),
+  const goToNextMonth = () => {
+    setSelectedMonth((prev) => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + 1);
+      return newDate;
+    });
+  };
+
+  const selectedMonthIncome = income.filter((item) => {
+    if (!item.date) return false;
+
+    const incomeDate = new Date(item.date);
+
+    return (
+      incomeDate.getMonth() === selectedMonth.getMonth() &&
+      incomeDate.getFullYear() === selectedMonth.getFullYear()
     );
+  });
 
-    const thisMonthIncomeTotal = getThisMonthIncomeTotal(income);
+  const selectedMonthIncomeTotal = selectedMonthIncome.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
+
+  const handleDeleteIncome = async (id: string) => {
+    await deleteIncome(id);
+    loadIncome();
+  };
 
   return (
     <ScrollView style={globalStyles.container}>
-        <Text style={globalStyles.title}>Incomes</Text>
-        <HomeHeader />
-        <TouchableOpacity
-            style={styles.addIncomeButton}
-            onPress={() => router.push('/add-income')}
-        >
-            <Text style={styles.addIncomeButtonText}>+ Add Income</Text>
+      <View style={globalStyles.header}>
+        <Text style={globalStyles.title}>Income</Text>
+
+        <TouchableOpacity onPress={() => router.push('/add-income')}>
+          <Text style={styles.addButton}>Add</Text>
         </TouchableOpacity>
+      </View>
 
-        <OverallMonthIncomeCard total={thisMonthIncomeTotal} />
+      <View style={styles.monthSelector}>
+  <TouchableOpacity onPress={goToPreviousMonth} style={styles.monthButton}>
+    <Text style={styles.monthArrow}>‹</Text>
+  </TouchableOpacity>
 
-        <Text style={globalStyles.sectionTitle}>Total Income</Text>
-        <RecentIncome income={income} onDelete={loadIncome} />
+  <Text style={styles.monthText}>
+    {selectedMonth.toLocaleDateString('en-GB', {
+      month: 'short',
+      year: 'numeric',
+    })}
+  </Text>
 
+  <TouchableOpacity onPress={goToNextMonth} style={styles.monthButton}>
+    <Text style={styles.monthArrow}>›</Text>
+  </TouchableOpacity>
+</View>
 
+      <OverallMonthIncomeCard
+  total={selectedMonthIncomeTotal}
+  count={selectedMonthIncome.length}
+/>
+
+      <Text style={styles.sectionTitle}>Income Records</Text>
+
+      {selectedMonthIncome.length === 0 ? (
+        <Text style={styles.emptyText}>No income for this month</Text>
+      ) : (
+        selectedMonthIncome.map((income) => (
+            <RecentIncomeItems
+            key={income.id}
+            id={income.id}
+            name={income.name}
+            value={`${income.value}`}
+            date={income.date}
+            accountType={income.accountType}
+            bankName={income.bankName}
+            onDelete={handleDeleteIncome}
+          />
+        ))
+      )}
     </ScrollView>
-    );
+  );
 }
 
 const styles = StyleSheet.create({
-    manageButton: {
-        color: colors.primary,
-        opacity: 0.85,
-        fontSize: 16,
-        
-        marginTop: 20,
-        marginBottom: 16,
-    },
+  addButton: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
-    addIncomeButton: {
-        backgroundColor: colors.primary,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        marginTop: 24,
-        marginBottom: 0,
-    },
-      
-    addIncomeButtonText: {
-        color: colors.background,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
+  monthSelector: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 18,
+  },
+  
+  monthButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  monthArrow: {
+    color: colors.text,
+    fontSize: 28,
+    lineHeight: 30,
+  },
+  
+  monthText: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '700',
+    minWidth: 150,
+    textAlign: 'center',
+  },
+
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 28,
+    marginBottom: 12,
+  },
+
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    marginTop: 20,
+    textAlign: 'center',
+  },
+
+  
 });
-
-      

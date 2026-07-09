@@ -1,5 +1,5 @@
-import { addGoal, getGoals, Goal, removeGoal, updateGoal } from '@/storage/goals';
 import { getSavings } from '@/storage/savings';
+import { addGoal, getGoals, Goal, removeGoal, updateGoal } from '@/storage/savingsgoals';
 import { colors, globalStyles } from '@/styles/global';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
