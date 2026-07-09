@@ -1,5 +1,4 @@
 import HomeHeader from '@/components/HomeHeader';
-import MonthlySavingsGrid from '@/components/MonthlySavingsGrid';
 import OverallSavingsGrid from '@/components/OverallSavingsGrid';
 import RecentSavings from '@/components/RecentSavings';
 import { Savings, clearAllSavings, getSavings } from '@/storage/savings';
@@ -50,7 +49,7 @@ export default function SavingsScreen() {
           </TouchableOpacity>
       
           <Text style={globalStyles.sectionTitle}>This Month’s Loans</Text>
-          <MonthlySavingsGrid savings={savings} goals={goals} />
+          
       
           <View style={globalStyles.header}>
             <Text style={globalStyles.sectionTitle}>Overall Loans Summary</Text>
