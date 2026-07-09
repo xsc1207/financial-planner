@@ -23,11 +23,11 @@ export const globalStyles = StyleSheet.create({
     color: colors.text,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '700',
     marginTop: 20,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   empty: {
     color: colors.textSecondary,

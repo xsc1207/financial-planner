@@ -1,68 +1,69 @@
-// src/storage/goals.ts
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Goal = {
   id: string;
   name: string;
   target: number;
+  startDate: string;
   deadline: string;
   color: string;
+  createdAt: string;
 };
 
-const GOALS_KEY = 'goals';
+const GOALS_KEY = '@finplanner:goals';
 
 export const getGoals = async (): Promise<Goal[]> => {
+  try {
     const data = await AsyncStorage.getItem(GOALS_KEY);
-  
+
     if (!data) {
-      console.log('Loaded Goals: []');
       return [];
     }
-  
-    const parsedGoals = JSON.parse(data);
-  
-    console.log('Loaded Goals:', parsedGoals);
-  
-    return parsedGoals;
+
+    const parsed = JSON.parse(data);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed;
+  } catch (error) {
+    console.log('Error loading goals:', error);
+    return [];
+  }
 };
 
-export const addGoal = async (goal: Goal) => {
-    const goals = await getGoals();
-    const updatedGoals = [...goals, goal];
-  
+export const addGoal = async (goal: Goal): Promise<Goal> => {
+  try {
+    const currentGoals = await getGoals();
+    const updatedGoals = [goal, ...currentGoals];
+
     await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(updatedGoals));
 
-    console.log('Saved goal:', goals);
-    console.log('All goals:', updatedGoals);
-  };
+    return goal;
+  } catch (error) {
+    console.log('Error adding goal:', error);
+    throw error;
+  }
+};
 
+export const updateGoal = async (updatedGoal: Goal): Promise<void> => {
+  const goals = await getGoals();
 
-  
-  export const clearGoals = async () => {
-    await AsyncStorage.removeItem(GOALS_KEY);
-  };
+  const updatedGoals = goals.map((goal) =>
+    goal.id === updatedGoal.id ? updatedGoal : goal,
+  );
 
-  export const updateGoal = async (updatedGoal: Goal) => {
-    const goals = await getGoals();
-  
-    const updatedGoals = goals.map((goal) =>
-      goal.id === updatedGoal.id ? updatedGoal : goal
-    );
-  
-    await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(updatedGoals));
+  await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(updatedGoals));
+};
 
-    console.log('Saved goals:', updateGoal);
-    console.log('All goals:', updatedGoals);
-  };
+export const removeGoal = async (id: string): Promise<void> => {
+  const goals = await getGoals();
+  const filtered = goals.filter((goal) => goal.id !== id);
 
-  export const removeGoal = async (goalId: string) => {
-    const goals = await getGoals();
-  
-    const updatedGoals = goals.filter((goal) => goal.id !== goalId);
-  
-    await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(updatedGoals));
+  await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(filtered));
+};
 
-    console.log('Removed goal id:', goalId);
-    console.log('All goals:', updatedGoals);
-  };
+export const clearAllGoals = async (): Promise<void> => {
+  await AsyncStorage.removeItem(GOALS_KEY);
+};

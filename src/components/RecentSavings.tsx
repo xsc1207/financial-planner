@@ -23,9 +23,13 @@ export default function RecentSavings({ savings = [], onDelete}: RecentSavingsPr
             id={saving.id}
             name={saving.name}
             value={`${saving.value}`}
-            types={saving.types}
+            types={saving.goalName}
+            date={saving.date}
+            accountType={saving.accountType}
+            bankName={saving.bankName}
             onDelete={onDelete}
           />
+
         ))
       )}
     </View>

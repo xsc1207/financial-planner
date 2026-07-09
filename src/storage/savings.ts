@@ -3,8 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type Savings = {
   id: string;
   name: string;
-  types: string;
+  goalId: string;
+  goalName: string;
   value: number;
+  date: string;
+  accountType: 'cash' | 'bank';
+  bankName?: string;
   createdAt: string;
 };
 
@@ -40,17 +44,18 @@ export const addSavings = async (
     const newSaving: Savings = {
       id: Date.now().toString(),
       name: saving.name,
-      types: saving.types,
+      goalId: saving.goalId,
+      goalName: saving.goalName,
       value: Number(saving.value) || 0,
+      date: saving.date || new Date().toISOString(),
+      accountType: saving.accountType,
+      bankName: saving.accountType === 'bank' ? saving.bankName : undefined,
       createdAt: new Date().toISOString(),
     };
 
     const updatedSavings = [newSaving, ...currentSavings];
 
     await AsyncStorage.setItem(SAVINGS_KEY, JSON.stringify(updatedSavings));
-
-    console.log('Saved savings:', newSaving);
-    console.log('All savings:', updatedSavings);
 
     return newSaving;
   } catch (error) {
@@ -61,7 +66,7 @@ export const addSavings = async (
 
 export const deleteSavings = async (id: string): Promise<void> => {
   const savings = await getSavings();
-  const filtered = savings.filter((savings) => savings.id !== id);
+  const filtered = savings.filter((saving) => saving.id !== id);
   await AsyncStorage.setItem(SAVINGS_KEY, JSON.stringify(filtered));
 };
 

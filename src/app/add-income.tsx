@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    color: 'red',
+    color: colors.primary,
     fontSize: 16,
   },
 
