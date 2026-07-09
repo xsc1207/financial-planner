@@ -46,11 +46,11 @@ export default function SavingsItem({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#16213e',
-    borderRadius: 10,
-    padding: 12,
     width: '48%',
-    borderLeftWidth: 3,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 14,
+    borderLeftWidth: 4,
   },
   label: {
     fontSize: 14,
