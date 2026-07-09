@@ -1,26 +1,33 @@
 import { Savings } from '@/storage/savings';
 import { Goal } from '@/storage/savingsgoals';
-import {
-    getMonthlyTargetForGoal,
-    getMonthlyTotalForGoal,
-} from '@/utils/savingsSummary';
+import { getCurrentMonthlyTarget } from '@/utils/goalSummary';
+import { getMonthlyTotalForGoal } from '@/utils/savingsSummary';
 import { StyleSheet, View } from 'react-native';
 import SavingsItem from './SavingsItems';
 
 type MonthlySavingsGridProps = {
   savings: Savings[];
   goals: Goal[];
+  allSavings: Savings[];
 };
 
 export default function MonthlySavingsGrid({
   savings = [],
   goals = [],
+  allSavings = [],
 }: MonthlySavingsGridProps) {
   return (
     <View style={styles.grid}>
       {goals.map((goal) => {
-        const thisMonthTotal = getMonthlyTotalForGoal(savings, goal.name);
-        const monthlyTarget = getMonthlyTargetForGoal(goal);
+        const thisMonthTotal = getMonthlyTotalForGoal(
+          savings,
+          goal.id,
+        );
+
+        const monthlyTarget = getCurrentMonthlyTarget(
+          goal,
+          allSavings,
+        );
 
         return (
           <SavingsItem

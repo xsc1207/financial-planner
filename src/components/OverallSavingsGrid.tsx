@@ -41,7 +41,7 @@ export default function OverallSavingsGrid({
     <View style={styles.grid}>
       {goals.map((goal) => {
         const total = savings
-          .filter((saving) => saving.types === goal.name)
+          .filter((saving) => saving.id === goal.name)
           .reduce((sum, saving) => sum + saving.value, 0);
 
         return (

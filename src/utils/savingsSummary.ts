@@ -1,56 +1,27 @@
 import { Savings } from '@/storage/savings';
 import { Goal } from '@/storage/savingsgoals';
-
-export const getMonthsUntilDeadline = (deadline: string) => {
-  const today = new Date();
-  const endDate = new Date(deadline);
-
-  if (Number.isNaN(endDate.getTime())) {
-    return 1;
-  }
-
-  const yearDiff = endDate.getFullYear() - today.getFullYear();
-  const monthDiff = endDate.getMonth() - today.getMonth();
-
-  const totalMonths = yearDiff * 12 + monthDiff + 1;
-
-  return Math.max(totalMonths, 1);
-};
+import { getCurrentMonthlyTarget } from '@/utils/goalSummary';
 
 export const getMonthlyTotalForGoal = (
   savings: Savings[],
-  goalName: string
+  goalId: string,
 ) => {
-  const today = new Date();
-
   return savings
-    .filter((saving) => {
-      const savingDate = new Date(saving.createdAt);
-
-      return (
-        saving.types === goalName &&
-        savingDate.getMonth() === today.getMonth() &&
-        savingDate.getFullYear() === today.getFullYear()
-      );
-    })
+    .filter((saving) => saving.goalId === goalId)
     .reduce((sum, saving) => sum + Number(saving.value || 0), 0);
-};
-
-export const getMonthlyTargetForGoal = (goal: Goal) => {
-  const monthsLeft = getMonthsUntilDeadline(goal.deadline);
-  return Math.ceil(Number(goal.target || 0) / monthsLeft);
 };
 
 export const getMonthlySavingsSummary = (
   savings: Savings[],
-  goals: Goal[]
+  goals: Goal[],
+  allSavings: Savings[] = savings,
 ) => {
   const totalMonthlySavings = goals.reduce((sum, goal) => {
-    return sum + getMonthlyTotalForGoal(savings, goal.name);
+    return sum + getMonthlyTotalForGoal(savings, goal.id);
   }, 0);
 
   const totalMonthlyTarget = goals.reduce((sum, goal) => {
-    return sum + getMonthlyTargetForGoal(goal);
+    return sum + getCurrentMonthlyTarget(goal, allSavings);
   }, 0);
 
   const percentage =
