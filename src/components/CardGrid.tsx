@@ -1,6 +1,6 @@
-import { Goal } from '@/storage/goals';
 import { Income } from '@/storage/income';
 import { Savings } from '@/storage/savings';
+import { Goal } from '@/storage/savingsgoals';
 import { getThisMonthIncomeTotal } from '@/utils/incomeSummary';
 import { getMonthlySavingsSummary } from '@/utils/savingsSummary';
 import { router } from 'expo-router';

@@ -1,5 +1,5 @@
-import { Goal } from '@/storage/goals';
 import { Savings } from '@/storage/savings';
+import { Goal } from '@/storage/savingsgoals';
 
 export const getMonthsUntilDeadline = (deadline: string) => {
   const today = new Date();

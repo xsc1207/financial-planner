@@ -3,19 +3,26 @@ import { StyleSheet, Text, View } from 'react-native';
 
 type OverallMonthIncomeCardProps = {
   total: number;
+  count: number;
 };
 
 export default function OverallMonthIncomeCard({
   total,
+  count,
 }: OverallMonthIncomeCardProps) {
   return (
     <View style={styles.card}>
-      <View>
-        <Text style={styles.title}>Overall Income</Text>
-        <Text style={styles.subtitle}>Monthly</Text>
+      <View style={styles.item}>
+        <Text style={styles.label}>Monthly Income</Text>
+        <Text style={styles.value}>£{total}</Text>
       </View>
 
-      <Text style={styles.value}>£{total}</Text>
+      <View style={styles.divider} />
+
+      <View style={styles.item}>
+        <Text style={styles.label}>Records</Text>
+        <Text style={styles.value}>{count}</Text>
+      </View>
     </View>
   );
 }
@@ -23,29 +30,35 @@ export default function OverallMonthIncomeCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 18,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     marginTop: 24,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
 
-  title: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '700',
+  item: {
+    flex: 1,
+    alignItems: 'center',
   },
 
-  subtitle: {
+  label: {
     color: colors.textSecondary,
     fontSize: 14,
-    marginTop: 6,
+    marginBottom: 8,
   },
 
   value: {
     color: colors.text,
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '700',
+  },
+
+  divider: {
+    width: 1,
+    height: 44,
+    backgroundColor: colors.textSecondary,
+    opacity: 0.25,
   },
 });

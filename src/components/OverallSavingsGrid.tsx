@@ -1,5 +1,5 @@
-import { Goal } from '@/storage/goals';
 import { Savings } from '@/storage/savings';
+import { Goal } from '@/storage/savingsgoals';
 import { StyleSheet, View } from 'react-native';
 import SavingsItem from './SavingsItems';
 

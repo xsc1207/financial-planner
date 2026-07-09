@@ -1,16 +1,15 @@
-import { addSavings } from '@/storage/savings';
 import { getGoals, Goal } from '@/storage/savingsgoals';
 import { colors, globalStyles } from '@/styles/global';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Modal,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 export default function AddSavingsScreen() {

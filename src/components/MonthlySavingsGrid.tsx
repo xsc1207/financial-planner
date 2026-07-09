@@ -1,8 +1,8 @@
-import { Goal } from '@/storage/goals';
 import { Savings } from '@/storage/savings';
+import { Goal } from '@/storage/savingsgoals';
 import {
-  getMonthlyTargetForGoal,
-  getMonthlyTotalForGoal,
+    getMonthlyTargetForGoal,
+    getMonthlyTotalForGoal,
 } from '@/utils/savingsSummary';
 import { StyleSheet, View } from 'react-native';
 import SavingsItem from './SavingsItems';

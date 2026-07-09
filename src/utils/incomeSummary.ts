@@ -5,14 +5,14 @@ export const getThisMonthIncomeTotal = (income: Income[]) => {
 
   return income
     .filter((item) => {
-      const incomeDate = new Date(item.createdAt);
+      if (!item.date) return false;
+
+      const incomeDate = new Date(item.date);
 
       return (
         incomeDate.getMonth() === today.getMonth() &&
         incomeDate.getFullYear() === today.getFullYear()
       );
     })
-    .reduce((sum, item) => {
-      return sum + Number(item.value || 0);
-    }, 0);
+    .reduce((sum, item) => sum + item.value, 0);
 };

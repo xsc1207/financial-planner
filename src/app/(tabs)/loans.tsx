@@ -2,8 +2,8 @@ import HomeHeader from '@/components/HomeHeader';
 import MonthlySavingsGrid from '@/components/MonthlySavingsGrid';
 import OverallSavingsGrid from '@/components/OverallSavingsGrid';
 import RecentSavings from '@/components/RecentSavings';
-import { Goal, getGoals } from '@/storage/goals';
 import { Savings, clearAllSavings, getSavings } from '@/storage/savings';
+import { Goal, getGoals } from '@/storage/savingsgoals';
 import { colors, globalStyles } from '@/styles/global';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -69,17 +69,17 @@ export default function SavingsScreen() {
 
 const styles = StyleSheet.create({
     manageButton: {
-        color: colors.primary,
-        opacity: 0.85,
-        fontSize: 16,
+      color: colors.primary,
+      opacity: 0.85,
+      fontSize: 16,
         
-        marginTop: 20,
-        marginBottom: 16,
+      marginTop: 20,        
+      marginBottom: 16,
     },
 
     addSavingButton: {
-        backgroundColor: colors.primary,
-        paddingVertical: 14,
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
         marginTop: 24,

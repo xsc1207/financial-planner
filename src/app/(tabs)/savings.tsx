@@ -2,8 +2,8 @@ import HomeHeader from '@/components/HomeHeader';
 import MonthlySavingsGrid from '@/components/MonthlySavingsGrid';
 import OverallSavingsGrid from '@/components/OverallSavingsGrid';
 import RecentSavings from '@/components/RecentSavings';
-import { Goal, getGoals } from '@/storage/goals';
 import { Savings, clearAllSavings, getSavings } from '@/storage/savings';
+import { Goal, getGoals } from '@/storage/savingsgoals';
 import { colors, globalStyles } from '@/styles/global';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -16,8 +16,6 @@ export default function SavingsScreen() {
     const loadSavings = async () => {
         const data = await getSavings();
         const goalsData = await getGoals();
-
-        
 
         setSavings(data);
         console.log('Loaded Savings:', data);

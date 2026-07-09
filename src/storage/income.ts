@@ -4,6 +4,9 @@ export type Income = {
   id: string;
   name: string;
   value: number;
+  date: string;
+  accountType: 'cash' | 'bank';
+  bankName?: string;
   createdAt: string;
 };
 
@@ -40,8 +43,13 @@ export const addIncome = async (
       id: Date.now().toString(),
       name: income.name,
       value: Number(income.value) || 0,
+      date: income.date || new Date().toISOString(),
+      accountType: income.accountType,
+      bankName: income.accountType === 'bank' ? income.bankName : undefined,
       createdAt: new Date().toISOString(),
     };
+
+    
 
     const updatedIncome = [newIncome, ...currentIncome];
 

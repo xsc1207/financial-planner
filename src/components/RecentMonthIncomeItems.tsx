@@ -1,66 +1,103 @@
-import { deleteIncome } from '@/storage/income';
-import { Alert, StyleSheet, Text, TouchableOpacity } from 'react-native';
-
-type ItemProps = {
+import { colors } from '@/styles/global';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+type RecentIncomeItemsProps = {
   id: string;
   name: string;
   value: string;
-  onDelete: () => void;
+  date?: string;
+  accountType?: 'cash' | 'bank';
+  bankName?: string;
+  onDelete: (id: string) => void;
 };
-
-  const currentDate = new Date().toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
 
 export default function RecentIncomeItems({
   id,
   name,
   value,
+  date,
+  accountType,
+  bankName,
   onDelete,
-}: ItemProps) {
-  const handleLongPress = () => {
-    Alert.alert('Delete Income', `Are you sure you want to delete income"${name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteIncome(id);
-          onDelete();
-        },
-      },
-    ]);
+}: RecentIncomeItemsProps) {
+  const formatDate = (date?: string) => {
+    if (!date) return 'No date';
+
+    return new Date(date).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
-
+  const accountText =
+    accountType === 'bank'
+      ? `Bank${bankName ? ` · ${bankName}` : ''}`
+      : accountType === 'cash'
+        ? 'Cash'
+        : '';
 
   return (
-    <TouchableOpacity style={styles.container} onLongPress={handleLongPress}>
-        <Text style={styles.name}> £ {value}</Text>
-        <Text style={styles.macros}>
-            {name} • {currentDate}
+    <TouchableOpacity
+      style={styles.card}
+      onLongPress={() => {
+        Alert.alert('Delete Income',`Are you sure you want to delete income "${name}"?`, [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
+        ]);
+      }}
+      activeOpacity={0.8}
+    >
+      <View style={styles.left}>
+        <Text style={styles.name} numberOfLines={1}>
+          {name}
         </Text>
+
+        <Text style={styles.meta} numberOfLines={1}>
+          {formatDate(date)}
+          {accountText ? ` · ${accountText}` : ''}
+        </Text>
+      </View>
+
+      <Text style={styles.value} numberOfLines={1}>
+        £{value}
+      </Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#16213e',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 10,
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
+
+  left: {
+    flex: 1,
+    marginRight: 12,
+  },
+
   name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '700',
   },
-  macros: {
-    fontSize: 13,
-    color: '#a0a0b0',
-    marginTop: 4,
+
+  meta: {
+    color: colors.textSecondary,
+    fontSize: 15,
+    marginTop: 8,
+  },
+
+  value: {
+    color: colors.primary,
+    fontSize: 22,
+    fontWeight: '700',
+    maxWidth: 130,
+    textAlign: 'right',
   },
 });
