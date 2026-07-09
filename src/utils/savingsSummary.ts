@@ -1,6 +1,6 @@
 import { Savings } from '@/storage/savings';
 import { Goal } from '@/storage/savingsgoals';
-import { getCurrentMonthlyTarget } from '@/utils/goalSummary';
+import { getMonthlyTargetForSelectedMonth } from '@/utils/goalSummary';
 
 export const getMonthlyTotalForGoal = (
   savings: Savings[],
@@ -15,13 +15,21 @@ export const getMonthlySavingsSummary = (
   savings: Savings[],
   goals: Goal[],
   allSavings: Savings[] = savings,
+  selectedMonth: Date = new Date(),
 ) => {
   const totalMonthlySavings = goals.reduce((sum, goal) => {
     return sum + getMonthlyTotalForGoal(savings, goal.id);
   }, 0);
 
   const totalMonthlyTarget = goals.reduce((sum, goal) => {
-    return sum + getCurrentMonthlyTarget(goal, allSavings);
+    return (
+      sum +
+      getMonthlyTargetForSelectedMonth(
+        goal,
+        allSavings,
+        selectedMonth,
+      )
+    );
   }, 0);
 
   const percentage =

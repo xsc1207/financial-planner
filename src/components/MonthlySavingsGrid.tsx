@@ -1,7 +1,7 @@
 import { Savings } from '@/storage/savings';
 import { Goal } from '@/storage/savingsgoals';
 import { colors } from '@/styles/global';
-import { getCurrentMonthlyTarget } from '@/utils/goalSummary';
+import { getMonthlyTargetForSelectedMonth } from '@/utils/goalSummary';
 import { getMonthlyTotalForGoal } from '@/utils/savingsSummary';
 import { useState } from 'react';
 import {
@@ -16,6 +16,7 @@ type MonthlySavingsGridProps = {
   savings: Savings[];
   goals: Goal[];
   allSavings: Savings[];
+  selectedMonth: Date;
 };
 
 const chunkArray = <T,>(array: T[], size: number): T[][] => {
@@ -32,6 +33,7 @@ export default function MonthlySavingsGrid({
   savings = [],
   goals = [],
   allSavings = [],
+  selectedMonth,
 }: MonthlySavingsGridProps) {
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -68,9 +70,10 @@ export default function MonthlySavingsGrid({
                   goal.id,
                 );
 
-                const monthlyTarget = getCurrentMonthlyTarget(
+                const monthlyTarget = getMonthlyTargetForSelectedMonth(
                   goal,
                   allSavings,
+                  selectedMonth,
                 );
 
                 return (

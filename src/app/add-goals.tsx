@@ -7,6 +7,9 @@ import {
   updateGoal,
 } from '@/storage/savingsgoals';
 import { colors, globalStyles } from '@/styles/global';
+import {
+  getMonthValue,
+} from '@/utils/goalSummary';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -31,6 +34,7 @@ const goalOptions = [
   'Investment',
   'Other',
 ];
+
 
 export default function AddGoalsScreen() {
   const [goalNameOption, setGoalNameOption] = useState('House');
@@ -161,56 +165,81 @@ export default function AddGoalsScreen() {
 
   const handleSaveGoal = async () => {
     const finalGoalName = getFinalGoalName();
-
+    const targetAmount = Number(target) || 0;
+  
     if (!finalGoalName) {
       Alert.alert('Error', 'Please enter goal name.');
       return;
     }
-
+  
     if (!target.trim()) {
       Alert.alert('Error', 'Please enter target amount.');
       return;
     }
-
+  
     if (!startDate) {
       Alert.alert('Error', 'Please select start date.');
       return;
     }
-
+  
     if (!deadline) {
       Alert.alert('Error', 'Please select deadline.');
       return;
     }
-
+  
     if (new Date(`${deadline}-01`) < new Date(`${startDate}-01`)) {
       Alert.alert('Error', 'Deadline cannot be earlier than start date.');
       return;
     }
-
+  
     if (editingGoal) {
-      await updateGoal({
+      const currentMonth = getMonthValue(new Date());
+  
+      const newPlan = {
+        effectiveMonth: currentMonth,
+        target: targetAmount,
+        deadline,
+      };
+  
+      const updatedGoal: Goal = {
         ...editingGoal,
         name: finalGoalName,
-        target: Number(target) || 0,
-        startDate,
+        target: targetAmount,
         deadline,
-      });
-
+        plans: [
+          ...(editingGoal.plans || []),
+          newPlan,
+        ],
+      };
+  
+      await updateGoal(updatedGoal);
+  
       Alert.alert('Success', 'Goal updated successfully!');
     } else {
-      await addGoal({
-        id: Date.now().toString(),
+      const newGoalId = Date.now().toString();
+  
+      const newGoal: Goal = {
+        id: newGoalId,
         name: finalGoalName,
-        target: Number(target) || 0,
+        target: targetAmount,
         startDate,
         deadline,
         color: getRandomColor(),
         createdAt: new Date().toISOString(),
-      });
-
+        plans: [
+          {
+            effectiveMonth: startDate,
+            target: targetAmount,
+            deadline,
+          },
+        ],
+      };
+  
+      await addGoal(newGoal);
+  
       Alert.alert('Success', 'Goal added successfully!');
     }
-
+  
     closeGoalModal();
     await loadData();
   };

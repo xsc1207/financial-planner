@@ -1,84 +1,105 @@
 import { Savings } from '@/storage/savings';
-import { Goal } from '@/storage/savingsgoals';
+import { Goal, GoalPlan } from '@/storage/savingsgoals';
 
-export const getGoalSavedAmount = (
-  savings: Savings[],
-  goalId: string,
-) => {
-  return savings
-    .filter((saving) => saving.goalId === goalId)
-    .reduce((sum, saving) => sum + saving.value, 0);
+export const getMonthValue = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  return `${year}-${month}`;
 };
 
-export const getSavedAmountBeforeMonth = (
-  savings: Savings[],
-  goalId: string,
-  monthDate: Date,
-) => {
-  const monthStart = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth(),
-    1,
-  );
-
-  return savings
-    .filter((saving) => {
-      if (saving.goalId !== goalId) return false;
-      if (!saving.date) return false;
-
-      const savingDate = new Date(saving.date);
-
-      return savingDate < monthStart;
-    })
-    .reduce((sum, saving) => sum + saving.value, 0);
+export const getMonthStart = (monthString: string) => {
+  return new Date(`${monthString}-01`);
 };
 
 export const getRemainingMonths = (
-  fromMonth: Date,
+  fromMonth: string,
   deadline: string,
 ) => {
-  if (!deadline) return 0;
+  if (!fromMonth || !deadline) return 0;
 
-  const fromMonthStart = new Date(
-    fromMonth.getFullYear(),
-    fromMonth.getMonth(),
-    1,
-  );
+  const fromDate = getMonthStart(fromMonth);
+  const deadlineDate = getMonthStart(deadline);
 
-  const deadlineDate = new Date(`${deadline}-01`);
-
-  const deadlineMonthStart = new Date(
-    deadlineDate.getFullYear(),
-    deadlineDate.getMonth(),
-    1,
-  );
+  if (
+    Number.isNaN(fromDate.getTime()) ||
+    Number.isNaN(deadlineDate.getTime())
+  ) {
+    return 0;
+  }
 
   const months =
-    (deadlineMonthStart.getFullYear() - fromMonthStart.getFullYear()) * 12 +
-    (deadlineMonthStart.getMonth() - fromMonthStart.getMonth()) +
+    (deadlineDate.getFullYear() - fromDate.getFullYear()) * 12 +
+    (deadlineDate.getMonth() - fromDate.getMonth()) +
     1;
 
   return Math.max(months, 0);
 };
 
-export const getCurrentMonthlyTarget = (
+export const getSavedAmountBeforeMonth = (
+  savings: Savings[],
+  goalId: string,
+  monthString: string,
+) => {
+  const monthStart = getMonthStart(monthString);
+
+  return savings
+    .filter((saving) => {
+      if (saving.goalId !== goalId) return false;
+
+      const dateValue = saving.date || saving.createdAt;
+      if (!dateValue) return false;
+
+      const savingDate = new Date(dateValue);
+
+      return savingDate < monthStart;
+    })
+    .reduce((sum, saving) => sum + Number(saving.value || 0), 0);
+};
+
+export const getPlanForMonth = (
+  goal: Goal,
+  selectedMonth: Date,
+): GoalPlan | null => {
+  const selectedMonthValue = getMonthValue(selectedMonth);
+
+  const plans = goal.plans || [];
+
+  if (plans.length === 0) return null;
+
+  const availablePlans = plans
+    .filter((plan) => plan.effectiveMonth <= selectedMonthValue)
+    .sort((a, b) => b.effectiveMonth.localeCompare(a.effectiveMonth));
+
+  return availablePlans[0] || null;
+};
+
+export const getMonthlyTargetForSelectedMonth = (
   goal: Goal,
   allSavings: Savings[],
+  selectedMonth: Date,
 ) => {
-  const today = new Date();
+  const selectedMonthValue = getMonthValue(selectedMonth);
 
-  const savedBeforeCurrentMonth = getSavedAmountBeforeMonth(
+  const plan = getPlanForMonth(goal, selectedMonth);
+
+  if (!plan) return 0;
+
+  const savedBeforeSelectedMonth = getSavedAmountBeforeMonth(
     allSavings,
     goal.id,
-    today,
+    selectedMonthValue,
   );
 
   const remainingAmount = Math.max(
-    goal.target - savedBeforeCurrentMonth,
+    Number(plan.target || 0) - savedBeforeSelectedMonth,
     0,
   );
 
-  const remainingMonths = getRemainingMonths(today, goal.deadline);
+  const remainingMonths = getRemainingMonths(
+    selectedMonthValue,
+    plan.deadline,
+  );
 
   if (remainingMonths <= 0) return 0;
 

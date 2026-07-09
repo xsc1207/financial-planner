@@ -220,12 +220,6 @@ export default function SavingsScreen() {
         </TouchableOpacity>
       </View>
 
-      {!isCurrentMonth && (
-        <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
-          <Text style={styles.todayButtonText}>Today</Text>
-        </TouchableOpacity>
-      )}
-
       <View style={styles.sectionHeader}>
         <Text style={globalStyles.sectionTitle}>This Month’s Goals</Text>
 
@@ -253,10 +247,11 @@ export default function SavingsScreen() {
         </View>
       ) : (
         <MonthlySavingsGrid
-          savings={selectedMonthSavings}
-          goals={selectedMonthGoals}
-          allSavings={savings}
-        />
+  savings={selectedMonthSavings}
+  goals={selectedMonthGoals}
+  allSavings={savings}
+  selectedMonth={selectedMonth}
+/>
       )}
 
       <View style={styles.recordsHeader}>
