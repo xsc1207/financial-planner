@@ -1,5 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export type GoalPlan = {
+  effectiveMonth: string;
+  target: number;
+  deadline: string;
+};
 export type Goal = {
   id: string;
   name: string;
@@ -8,6 +13,7 @@ export type Goal = {
   deadline: string;
   color: string;
   createdAt: string;
+  plans: GoalPlan[];
 };
 
 const GOALS_KEY = '@finplanner:goals';
