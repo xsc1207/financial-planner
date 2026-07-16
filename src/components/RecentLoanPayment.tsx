@@ -12,7 +12,9 @@ export default function RecentLoanPayments({
   loanPayments = [],
   onDelete,
 }: RecentLoanPaymentsProps) {
-  const safeLoanPayments = Array.isArray(loanPayments) ? loanPayments : [];
+  const safeLoanPayments = Array.isArray(loanPayments)
+    ? loanPayments
+    : [];
 
   const handleDeleteLoanPayment = async (id: string) => {
     await deleteLoanPayment(id);
@@ -22,7 +24,9 @@ export default function RecentLoanPayments({
   return (
     <View>
       {safeLoanPayments.length === 0 ? (
-        <Text style={globalStyles.empty}>No loan payments logged yet.</Text>
+        <Text style={globalStyles.empty}>
+          No loan payments logged yet.
+        </Text>
       ) : (
         safeLoanPayments.map((payment) => (
           <RecentLoanPaymentItems
@@ -31,9 +35,12 @@ export default function RecentLoanPayments({
             name={payment.name}
             loanName={payment.loanName}
             value={`${payment.value}`}
+            regularPaymentAmount={payment.regularPaymentAmount}
+            extraPaymentAmount={payment.extraPaymentAmount}
             date={payment.date || payment.createdAt}
             accountType={payment.accountType}
             bankName={payment.bankName}
+            isExtraPayment={payment.isExtraPayment}
             onDelete={handleDeleteLoanPayment}
           />
         ))

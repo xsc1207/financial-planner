@@ -6,20 +6,25 @@ type RecentLoanPaymentItemsProps = {
   name: string;
   loanName: string;
   value: string;
+  regularPaymentAmount?: number;
+  extraPaymentAmount?: number;
   date?: string;
   accountType?: 'cash' | 'bank';
   bankName?: string;
+  isExtraPayment?: 'yes' | 'no';
   onDelete: (id: string) => void;
 };
 
 export default function RecentLoanPaymentItems({
   id,
-  name,
   loanName,
   value,
+  regularPaymentAmount = 0,
+  extraPaymentAmount = 0,
   date,
   accountType,
   bankName,
+  isExtraPayment = 'no',
   onDelete,
 }: RecentLoanPaymentItemsProps) {
   const formatDate = (date?: string) => {
@@ -32,9 +37,13 @@ export default function RecentLoanPaymentItems({
     });
   };
 
+  const formatCurrency = (amount?: number | string) => {
+    return Number(amount || 0).toLocaleString('en-GB');
+  };
+
   const accountText =
     accountType === 'bank'
-      ? `Bank${bankName ? ` · ${bankName}` : ''}`
+      ? bankName || 'Bank'
       : accountType === 'cash'
         ? 'Cash'
         : '';
@@ -44,8 +53,8 @@ export default function RecentLoanPaymentItems({
       style={styles.card}
       onLongPress={() => {
         Alert.alert(
-          'Delete Loan Payment',
-          `Are you sure you want to delete loan payment "${name}"?`,
+          'Delete Payment',
+          `Are you sure you want to delete "${loanName}" payment?`,
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -56,24 +65,56 @@ export default function RecentLoanPaymentItems({
           ],
         );
       }}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
-      <View style={styles.left}>
-        <Text style={styles.name} numberOfLines={1}>
-          {name}
-        </Text>
-
-        <Text style={styles.meta} numberOfLines={1}>
-          {formatDate(date)} · {loanName}
+      <View style={styles.topRow}>
+        <View style={styles.titleWrap}>
+          <Text style={styles.name} numberOfLines={1}>
+            {loanName}
           </Text>
+
           <Text style={styles.meta} numberOfLines={1}>
-          {accountText ? `${accountText}` : ''}
-        </Text>
+            {formatDate(date)}
+            {accountText ? ` · ${accountText}` : ''}
+          </Text>
+        </View>
+
+        <View style={styles.rightWrap}>
+          <Text style={styles.totalValue}>£{formatCurrency(value)}</Text>
+          {isExtraPayment === 'yes' && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>Extra</Text>
+            </View>
+          )}
+        </View>
       </View>
 
-      <Text style={styles.value} numberOfLines={1}>
-        £{value}
-      </Text>
+      <View style={styles.infoRow}>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Regular</Text>
+          <Text style={styles.infoAmount}>
+            £{formatCurrency(regularPaymentAmount)}
+          </Text>
+        </View>
+
+        <View style={styles.dot} />
+
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Extra</Text>
+          <Text style={styles.infoAmount}>
+            £{formatCurrency(extraPaymentAmount)}
+          </Text>
+        </View>
+
+        <View style={styles.dot} />
+
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Total</Text>
+          <Text style={styles.infoAmountPrimary}>
+            £{formatCurrency(value)}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -81,15 +122,19 @@ export default function RecentLoanPaymentItems({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     marginTop: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
 
-  left: {
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+
+  titleWrap: {
     flex: 1,
     marginRight: 12,
   },
@@ -97,20 +142,77 @@ const styles = StyleSheet.create({
   name: {
     color: colors.text,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 
   meta: {
     color: colors.textSecondary,
-    fontSize: 15,
-    marginTop: 8,
+    fontSize: 14,
+    marginTop: 6,
   },
 
-  value: {
+  rightWrap: {
+    alignItems: 'flex-end',
+  },
+
+  totalValue: {
     color: colors.primary,
-    fontSize: 22,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+
+  badge: {
+    marginTop: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+
+  badgeText: {
+    color: colors.background,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  infoRow: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  infoItem: {
+    flex: 1,
+  },
+
+  infoLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginBottom: 4,
+  },
+
+  infoAmount: {
+    color: colors.text,
+    fontSize: 16,
     fontWeight: '700',
-    maxWidth: 130,
-    textAlign: 'right',
+  },
+
+  infoAmountPrimary: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.textSecondary,
+    opacity: 0.5,
+    marginHorizontal: 8,
   },
 });
