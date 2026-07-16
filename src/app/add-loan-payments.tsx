@@ -30,26 +30,17 @@ const bankOptions = [
 
 export default function AddLoanPaymentScreen() {
   const [loans, setLoans] = useState<Loan[]>([]);
-
   const [selectedLoanId, setSelectedLoanId] = useState('');
-  const [paymentName, setPaymentName] = useState('');
-  const [value, setValue] = useState('');
+
   const [regularPaymentAmount, setRegularPaymentAmount] = useState('');
   const [extraPaymentAmount, setExtraPaymentAmount] = useState('');
 
   const [date, setDate] = useState(new Date().toISOString());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const [accountType, setAccountType] =
-    useState<'cash' | 'bank'>('bank');
-
   const [bankNameOption, setBankNameOption] = useState('Barclays');
   const [customBankName, setCustomBankName] = useState('');
 
-  const [isExtraPayment, setIsExtraPayment] =
-    useState<'yes' | 'no'>('no');
-
-  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     loadLoans();
@@ -64,20 +55,21 @@ export default function AddLoanPaymentScreen() {
       const firstLoan = loansData[0];
 
       setSelectedLoanId(firstLoan.id);
-      setPaymentName(`${firstLoan.name} payment`);
 
       if (firstLoan.monthlyPayment) {
         setRegularPaymentAmount(String(firstLoan.monthlyPayment));
-        setValue(String(firstLoan.monthlyPayment));
       }
     }
   };
 
   const selectedLoan = loans.find((loan) => loan.id === selectedLoanId);
 
-  const getFinalBankName = () => {
-    if (accountType !== 'bank') return undefined;
+  const regularAmount = Number(regularPaymentAmount) || 0;
+  const extraAmount = Number(extraPaymentAmount) || 0;
+  const totalPaymentAmount = regularAmount + extraAmount;
+  const isExtraPayment = extraAmount > 0 ? 'yes' : 'no';
 
+  const getFinalBankName = () => {
     return bankNameOption === 'Other'
       ? customBankName.trim()
       : bankNameOption;
@@ -91,36 +83,8 @@ export default function AddLoanPaymentScreen() {
     });
   };
 
-  const calculateTotalPayment = (
-    regularAmount: string,
-    extraAmount: string,
-  ) => {
-    const regular = Number(regularAmount) || 0;
-    const extra = Number(extraAmount) || 0;
-
-    return regular + extra;
-  };
-
-  const handleRegularPaymentChange = (text: string) => {
-    setRegularPaymentAmount(text);
-
-    const total = calculateTotalPayment(text, extraPaymentAmount);
-
-    if (total > 0) {
-      setValue(String(total));
-    }
-  };
-
-  const handleExtraPaymentChange = (text: string) => {
-    setExtraPaymentAmount(text);
-
-    const total = calculateTotalPayment(regularPaymentAmount, text);
-
-    if (total > 0) {
-      setValue(String(total));
-    }
-
-    setIsExtraPayment(Number(text) > 0 ? 'yes' : 'no');
+  const formatCurrency = (amount?: number) => {
+    return Number(amount || 0).toLocaleString('en-GB');
   };
 
   const handleLoanChange = (loanId: string) => {
@@ -128,20 +92,13 @@ export default function AddLoanPaymentScreen() {
 
     setSelectedLoanId(loanId);
 
-    if (loan) {
-      setPaymentName(`${loan.name} payment`);
-
-      if (loan.monthlyPayment) {
-        setRegularPaymentAmount(String(loan.monthlyPayment));
-
-        const total = calculateTotalPayment(
-          String(loan.monthlyPayment),
-          extraPaymentAmount,
-        );
-
-        setValue(String(total));
-      }
+    if (loan?.monthlyPayment) {
+      setRegularPaymentAmount(String(loan.monthlyPayment));
+    } else {
+      setRegularPaymentAmount('');
     }
+
+    setExtraPaymentAmount('');
   };
 
   const handleSavePayment = async () => {
@@ -150,20 +107,6 @@ export default function AddLoanPaymentScreen() {
       return;
     }
 
-    const finalPaymentName = paymentName.trim();
-
-    if (!finalPaymentName) {
-      Alert.alert('Error', 'Please enter payment name.');
-      return;
-    }
-
-    if (!value.trim()) {
-      Alert.alert('Error', 'Please enter payment amount.');
-      return;
-    }
-
-    const totalPaymentAmount = Number(value) || 0;
-
     if (totalPaymentAmount <= 0) {
       Alert.alert('Error', 'Payment amount must be greater than 0.');
       return;
@@ -171,28 +114,26 @@ export default function AddLoanPaymentScreen() {
 
     const finalBankName = getFinalBankName();
 
-    if (accountType === 'bank' && !finalBankName) {
+    if (!finalBankName) {
       Alert.alert('Error', 'Please select or enter bank name.');
       return;
     }
 
     await addLoanPayment({
-      name: finalPaymentName,
+      name: `${selectedLoan.name} payment`,
       loanId: selectedLoan.id,
       loanName: selectedLoan.name,
 
       value: totalPaymentAmount,
-      regularPaymentAmount: Number(regularPaymentAmount) || 0,
-      extraPaymentAmount: Number(extraPaymentAmount) || 0,
+      regularPaymentAmount: regularAmount,
+      extraPaymentAmount: extraAmount,
 
       date,
 
-      accountType,
+      accountType: 'bank',
       bankName: finalBankName,
 
-      isExtraPayment,
-
-      notes: notes.trim() || undefined,
+      isExtraPayment
     });
 
     Alert.alert('Success', 'Loan payment added successfully!');
@@ -204,9 +145,10 @@ export default function AddLoanPaymentScreen() {
     <ScrollView
       style={globalStyles.container}
       contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
     >
       <View style={globalStyles.header}>
-        <Text style={globalStyles.title}>Add Loan Payment</Text>
+        <Text style={globalStyles.title}>Add Payment</Text>
 
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButton}>Back</Text>
@@ -216,6 +158,7 @@ export default function AddLoanPaymentScreen() {
       {loans.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>No loans yet</Text>
+
           <Text style={styles.emptyText}>
             Please add a loan first before recording a payment.
           </Text>
@@ -229,22 +172,22 @@ export default function AddLoanPaymentScreen() {
         </View>
       ) : (
         <>
-          <Text style={styles.label}>Loan</Text>
+          <Text style={styles.sectionTitle}>Loan</Text>
 
-          <View style={styles.optionRow}>
+          <View style={styles.chipRow}>
             {loans.map((loan) => (
               <TouchableOpacity
                 key={loan.id}
                 style={[
-                  styles.optionButton,
-                  selectedLoanId === loan.id && styles.optionButtonActive,
+                  styles.chip,
+                  selectedLoanId === loan.id && styles.chipActive,
                 ]}
                 onPress={() => handleLoanChange(loan.id)}
               >
                 <Text
                   style={[
-                    styles.optionText,
-                    selectedLoanId === loan.id && styles.optionTextActive,
+                    styles.chipText,
+                    selectedLoanId === loan.id && styles.chipTextActive,
                   ]}
                 >
                   {loan.name}
@@ -253,29 +196,50 @@ export default function AddLoanPaymentScreen() {
             ))}
           </View>
 
-          <Text style={styles.label}>Payment name</Text>
+          {!!selectedLoan && (
+            <View style={styles.loanSummaryCard}>
+              <View style={styles.loanSummaryLeft}>
+                <Text style={styles.loanSummaryName} numberOfLines={1}>
+                  {selectedLoan.name}
+                </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. July loan payment"
-            placeholderTextColor={colors.textSecondary}
-            value={paymentName}
-            onChangeText={setPaymentName}
-          />
+                <Text style={styles.loanSummaryMeta}>
+                  Monthly £{formatCurrency(selectedLoan.monthlyPayment)}
+                </Text>
+              </View>
 
-          <Text style={styles.label}>Date</Text>
+              <View style={styles.loanSummaryRight}>
+                <Text style={styles.loanSummaryLabel}>Rate</Text>
+                <Text style={styles.loanSummaryValue}>
+                  {selectedLoan.interestRate}%
+                </Text>
+              </View>
+            </View>
+          )}
 
-          <TouchableOpacity
-            style={styles.dateInput}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.inputText}>{formatDisplayDate(date)}</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Payment details</Text>
+
+          <View style={styles.dateRow}>
+            <TouchableOpacity
+              style={styles.dateBox}
+              onPress={() => setShowDatePicker(!showDatePicker)}
+            >
+              <Text style={styles.fieldLabel}>Date</Text>
+              <Text style={styles.dateText}>{formatDisplayDate(date)}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.changeDateButton}
+              onPress={() => setShowDatePicker(!showDatePicker)}
+            >
+              <Text style={styles.changeDateText}>
+                {showDatePicker ? 'Close' : 'Change'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {showDatePicker && (
             <View style={styles.datePickerBox}>
-              <Text style={styles.datePickerTitle}>Select payment date</Text>
-
               <DateTimePicker
                 value={new Date(date)}
                 mode="date"
@@ -293,168 +257,116 @@ export default function AddLoanPaymentScreen() {
                 }}
               />
 
-              <TouchableOpacity
-                style={styles.doneButton}
-                onPress={() => setShowDatePicker(false)}
-              >
-                <Text style={styles.doneButtonText}>Done</Text>
-              </TouchableOpacity>
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
-          <Text style={styles.groupTitle}>Payment Amount</Text>
+          <View style={styles.amountRow}>
+            <View style={styles.amountColumn}>
+              <Text style={styles.fieldLabel}>Regular</Text>
 
-          <Text style={styles.label}>Regular payment amount</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="£0"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="numeric"
+                value={regularPaymentAmount}
+                onChangeText={setRegularPaymentAmount}
+              />
+            </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="£0"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-            value={regularPaymentAmount}
-            onChangeText={handleRegularPaymentChange}
-          />
+            <View style={styles.amountColumn}>
+              <Text style={styles.fieldLabel}>Extra</Text>
 
-          <Text style={styles.label}>Extra payment amount</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="£0"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="numeric"
+                value={extraPaymentAmount}
+                onChangeText={setExtraPaymentAmount}
+              />
+            </View>
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="£0"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-            value={extraPaymentAmount}
-            onChangeText={handleExtraPaymentChange}
-          />
+          <View style={styles.totalRow}>
+            <View style={styles.totalBox}>
+              <Text style={styles.totalLabel}>Total payment</Text>
+              <Text style={styles.totalAmount}>
+                £{formatCurrency(totalPaymentAmount)}
+              </Text>
+            </View>
 
-          <Text style={styles.label}>Total payment amount</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="£0"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-            value={value}
-            onChangeText={setValue}
-          />
-
-          <Text style={styles.groupTitle}>Extra Payment</Text>
-
-          <Text style={styles.label}>Is this an extra payment?</Text>
-
-          <View style={styles.optionRow}>
-            {(['yes', 'no'] as const).map((option) => (
-              <TouchableOpacity
-                key={option}
+            <View
+              style={[
+                styles.badgeBox,
+                isExtraPayment === 'yes' && styles.badgeBoxActive,
+              ]}
+            >
+              <Text
                 style={[
-                  styles.optionButton,
-                  isExtraPayment === option && styles.optionButtonActive,
+                  styles.badgeText,
+                  isExtraPayment === 'yes' && styles.badgeTextActive,
                 ]}
-                onPress={() => setIsExtraPayment(option)}
               >
-                <Text
-                  style={[
-                    styles.optionText,
-                    isExtraPayment === option && styles.optionTextActive,
-                  ]}
-                >
-                  {option === 'yes' ? 'Yes' : 'No'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                {isExtraPayment === 'yes' ? 'Extra included' : 'Regular only'}
+              </Text>
+            </View>
           </View>
 
           {!!selectedLoan && selectedLoan.allowsExtraPayment === 'yes' && (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>Extra payment rules</Text>
+            <View style={styles.rulesCard}>
+              <Text style={styles.rulesText}>
+                Extra rule: {selectedLoan.extraPaymentAllowedPercent || 0}%
+                allowance
+              </Text>
 
-              {!!selectedLoan.extraPaymentAllowedPercent && (
-                <Text style={styles.infoText}>
-                  Allowance: {selectedLoan.extraPaymentAllowedPercent}%
-                </Text>
-              )}
-
-              {!!selectedLoan.extraPaymentChargeRate && (
-                <Text style={styles.infoText}>
-                  Charge rate: {selectedLoan.extraPaymentChargeRate}%
-                </Text>
-              )}
+              <Text style={styles.rulesText}>
+                {selectedLoan.extraPaymentChargeRate || 0}% charge
+              </Text>
             </View>
           )}
 
-          <Text style={styles.groupTitle}>Payment Account</Text>
+          <Text style={styles.sectionTitle}>Payment account</Text>
 
-          <Text style={styles.label}>Account type</Text>
-
-          <View style={styles.optionRow}>
-            {(['cash', 'bank'] as const).map((type) => (
+          <View style={styles.chipRow}>
+            {bankOptions.map((bank) => (
               <TouchableOpacity
-                key={type}
+                key={bank}
                 style={[
-                  styles.optionButton,
-                  accountType === type && styles.optionButtonActive,
+                  styles.chip,
+                  bankNameOption === bank && styles.chipActive,
                 ]}
-                onPress={() => setAccountType(type)}
+                onPress={() => setBankNameOption(bank)}
               >
                 <Text
                   style={[
-                    styles.optionText,
-                    accountType === type && styles.optionTextActive,
+                    styles.chipText,
+                    bankNameOption === bank && styles.chipTextActive,
                   ]}
                 >
-                  {type === 'cash' ? 'Cash' : 'Bank'}
+                  {bank}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {accountType === 'bank' && (
-            <>
-              <Text style={styles.label}>Bank name</Text>
-
-              <View style={styles.optionRow}>
-                {bankOptions.map((bank) => (
-                  <TouchableOpacity
-                    key={bank}
-                    style={[
-                      styles.optionButton,
-                      bankNameOption === bank && styles.optionButtonActive,
-                    ]}
-                    onPress={() => setBankNameOption(bank)}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        bankNameOption === bank && styles.optionTextActive,
-                      ]}
-                    >
-                      {bank}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {bankNameOption === 'Other' && (
-                <TextInput
-                  style={[styles.input, styles.customInput]}
-                  placeholder="Enter bank name"
-                  placeholderTextColor={colors.textSecondary}
-                  value={customBankName}
-                  onChangeText={setCustomBankName}
-                />
-              )}
-            </>
+          {bankNameOption === 'Other' && (
+            <TextInput
+              style={[styles.input, styles.otherInput]}
+              placeholder="Enter bank name"
+              placeholderTextColor={colors.textSecondary}
+              value={customBankName}
+              onChangeText={setCustomBankName}
+            />
           )}
-
-          <Text style={styles.groupTitle}>Notes</Text>
-
-          <TextInput
-            style={[styles.input, styles.notesInput]}
-            placeholder="Any notes about this payment"
-            placeholderTextColor={colors.textSecondary}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-          />
 
           <TouchableOpacity style={styles.button} onPress={handleSavePayment}>
             <Text style={styles.buttonText}>Save Payment</Text>
@@ -467,7 +379,7 @@ export default function AddLoanPaymentScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    paddingBottom: 40,
+    paddingBottom: 32,
   },
 
   backButton: {
@@ -476,10 +388,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: 18,
+    marginBottom: 8,
+  },
+
   emptyCard: {
     backgroundColor: colors.surface,
     borderRadius: 18,
-    padding: 20,
+    padding: 18,
     marginTop: 24,
   },
 
@@ -501,7 +421,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
-    marginTop: 18,
+    marginTop: 16,
   },
 
   manageButtonText: {
@@ -510,99 +430,133 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  groupTitle: {
-    color: colors.primary,
-    fontSize: 19,
-    fontWeight: '800',
-    marginTop: 28,
-    marginBottom: 4,
-  },
-
-  label: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-
-  optionRow: {
+  chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
+    marginBottom: 8,
   },
 
-  optionButton: {
+  chip: {
     backgroundColor: colors.surface,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    borderRadius: 22,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
   },
 
-  optionButtonActive: {
+  chipActive: {
     backgroundColor: colors.primary,
   },
 
-  optionText: {
+  chipText: {
     color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
-  optionTextActive: {
-    color: colors.background,
+    fontSize: 14,
     fontWeight: '700',
   },
 
-  input: {
+  chipTextActive: {
+    color: colors.background,
+  },
+
+  loanSummaryCard: {
     backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 15,
+    marginTop: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  loanSummaryLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+
+  loanSummaryName: {
     color: colors.text,
-    padding: 16,
-    borderRadius: 14,
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '800',
   },
 
-  customInput: {
-    marginTop: 14,
+  loanSummaryMeta: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginTop: 5,
   },
 
-  notesInput: {
-    minHeight: 90,
-    textAlignVertical: 'top',
+  loanSummaryRight: {
+    alignItems: 'flex-end',
   },
 
-  inputText: {
-    color: colors.text,
-    fontSize: 16,
+  loanSummaryLabel: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 
-  dateInput: {
+  loanSummaryValue: {
+    color: colors.primary,
+    fontSize: 19,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+
+  dateRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  dateBox: {
+    flex: 1,
     backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+
+  fieldLabel: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+
+  dateText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+
+  changeDateButton: {
+    width: 105,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  changeDateText: {
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '800',
   },
 
   datePickerBox: {
     backgroundColor: colors.surface,
-    borderRadius: 18,
-    padding: 16,
-    marginTop: 18,
-  },
-
-  datePickerTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-    textAlign: 'center',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
   },
 
   doneButton: {
     backgroundColor: colors.primary,
-    padding: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 10,
   },
 
   doneButtonText: {
@@ -611,37 +565,108 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  infoCard: {
+  amountRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  amountColumn: {
+    flex: 1,
+  },
+
+  input: {
+    backgroundColor: colors.surface,
+    color: colors.text,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    fontSize: 16,
+  },
+
+  totalRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  totalBox: {
+    flex: 1,
     backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 16,
-    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
 
-  infoTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-
-  infoText: {
+  totalLabel: {
     color: colors.textSecondary,
-    fontSize: 15,
-    marginTop: 4,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+
+  totalAmount: {
+    color: colors.text,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+
+  badgeBox: {
+    width: 135,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+
+  badgeBoxActive: {
+    backgroundColor: colors.primary,
+  },
+
+  badgeText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+
+  badgeTextActive: {
+    color: colors.background,
+  },
+
+  rulesCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    marginBottom: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+
+  rulesText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  otherInput: {
+    marginTop: 2,
   },
 
   button: {
     backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 14,
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    marginTop: 28,
+    marginTop: 20,
   },
 
   buttonText: {
     color: colors.background,
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
