@@ -1,10 +1,10 @@
 import { colors } from '@/styles/global';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-type RecentSavingsItemsProps = {
+type RecentLoanPaymentItemsProps = {
   id: string;
   name: string;
-  goalName: string;
+  loanName: string;
   value: string;
   date?: string;
   accountType?: 'cash' | 'bank';
@@ -12,16 +12,16 @@ type RecentSavingsItemsProps = {
   onDelete: (id: string) => void;
 };
 
-export default function RecentSavingsItems({
+export default function RecentLoanPaymentItems({
   id,
   name,
-  goalName,
+  loanName,
   value,
   date,
   accountType,
   bankName,
   onDelete,
-}: RecentSavingsItemsProps) {
+}: RecentLoanPaymentItemsProps) {
   const formatDate = (date?: string) => {
     if (!date) return 'No date';
 
@@ -44,8 +44,8 @@ export default function RecentSavingsItems({
       style={styles.card}
       onLongPress={() => {
         Alert.alert(
-          'Delete Saving',
-          `Are you sure you want to delete saving "${name}"?`,
+          'Delete Loan Payment',
+          `Are you sure you want to delete loan payment "${name}"?`,
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -64,11 +64,10 @@ export default function RecentSavingsItems({
         </Text>
 
         <Text style={styles.meta} numberOfLines={1}>
-        {goalName} · {formatDate(date)}
+          {formatDate(date)} · {loanName}
           </Text>
-
           <Text style={styles.meta} numberOfLines={1}>
-        {accountText ? `${accountText}` : ''}
+          {accountText ? `${accountText}` : ''}
         </Text>
       </View>
 
