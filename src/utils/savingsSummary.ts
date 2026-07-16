@@ -2,6 +2,24 @@ import { Savings } from '@/storage/savings';
 import { Goal } from '@/storage/savingsgoals';
 import { getMonthlyTargetForSelectedMonth } from '@/utils/goalSummary';
 
+export const getSavingsForMonth = (
+  savings: Savings[],
+  selectedMonth: Date,
+) => {
+  return savings.filter((saving) => {
+    const dateValue = saving.date || saving.createdAt;
+
+    if (!dateValue) return false;
+
+    const savingDate = new Date(dateValue);
+
+    return (
+      savingDate.getMonth() === selectedMonth.getMonth() &&
+      savingDate.getFullYear() === selectedMonth.getFullYear()
+    );
+  });
+};
+
 export const getMonthlyTotalForGoal = (
   savings: Savings[],
   goalId: string,
@@ -17,8 +35,13 @@ export const getMonthlySavingsSummary = (
   allSavings: Savings[] = savings,
   selectedMonth: Date = new Date(),
 ) => {
+  const selectedMonthSavings = getSavingsForMonth(
+    savings,
+    selectedMonth,
+  );
+
   const totalMonthlySavings = goals.reduce((sum, goal) => {
-    return sum + getMonthlyTotalForGoal(savings, goal.id);
+    return sum + getMonthlyTotalForGoal(selectedMonthSavings, goal.id);
   }, 0);
 
   const totalMonthlyTarget = goals.reduce((sum, goal) => {

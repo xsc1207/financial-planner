@@ -40,11 +40,12 @@ export default function HomeScreen() {
     <ScrollView style={globalStyles.container}>
       <Text style={globalStyles.title}>Welcome to FinPlanner</Text>
       <HomeHeader />
-      <HighlightCard />
-      <Text style={globalStyles.sectionTitle}>Monthly Overview</Text>
-      <CardGrid income={income} savings={savings} goals={goals} />
+      <HighlightCard income={income} savings={savings} goals={goals}/>
       <Text style={globalStyles.sectionTitle}>Budget Health</Text>
       <Text style={styles.text}>You are on track this month.</Text>
+      <Text style={globalStyles.sectionTitle}>Monthly Overview</Text>
+      <CardGrid income={income} savings={savings} goals={goals} />
+      
     </ScrollView>
     
   );
