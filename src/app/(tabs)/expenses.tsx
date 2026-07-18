@@ -1,18 +1,20 @@
 import {
   FixedExpense,
   FlexibleExpense,
+  deleteFlexibleExpense,
   getFixedExpenses,
   getFlexibleExpenses,
 } from '@/storage/expenses';
 import { colors, globalStyles } from '@/styles/global';
 import {
-  getActiveFixedExpenses,
+  getDueFixedExpensesForMonth,
   getExpenseOverview,
   getFlexibleExpensesForMonth,
 } from '@/utils/expensesSummary';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -105,7 +107,10 @@ export default function ExpensesScreen() {
     setShowMonthPicker(false);
   };
 
-  const activeFixedExpenses = getActiveFixedExpenses(fixedExpenses);
+  const dueFixedExpenses = getDueFixedExpensesForMonth(
+    fixedExpenses,
+    selectedMonth,
+  );
 
   const selectedMonthFlexibleExpenses = getFlexibleExpensesForMonth(
     flexibleExpenses,
@@ -132,23 +137,59 @@ export default function ExpensesScreen() {
     });
   };
 
+  const getFixedExpenseDate = (expense: FixedExpense) => {
+    if (
+      expense.paymentMethod !== 'directDebit' ||
+      !expense.paymentDayOfMonth
+    ) {
+      return null;
+    }
+
+    const year = selectedMonth.getFullYear();
+    const month = selectedMonth.getMonth();
+
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+
+    const validDay = Math.min(
+      Number(expense.paymentDayOfMonth),
+      lastDayOfMonth,
+    );
+
+    return new Date(year, month, validDay);
+  };
+
+  const formatFixedExpenseDate = (expense: FixedExpense) => {
+    const fixedDate = getFixedExpenseDate(expense);
+
+    if (!fixedDate) return 'Manual payment';
+
+    return fixedDate.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
   const getFixedCategoryLabel = (category: FixedExpense['category']) => {
     const labels: Record<FixedExpense['category'], string> = {
       rent: 'Rent',
       councilTax: 'Council Tax',
-      electricity: 'Electricity',
-      gas: 'Gas',
-      water: 'Water',
+      energy: 'Energy',
       internet: 'Internet',
       phone: 'Phone',
       insurance: 'Insurance',
-      subscription: 'Subscription',
-      nursery: 'Nursery',
-      transport: 'Transport',
       other: 'Other',
     };
 
     return labels[category];
+  };
+
+  const getFixedDisplayCategory = (expense: FixedExpense) => {
+    if (expense.category === 'other' && expense.customCategoryName) {
+      return expense.customCategoryName;
+    }
+
+    return getFixedCategoryLabel(expense.category);
   };
 
   const getFlexibleCategoryLabel = (
@@ -170,6 +211,14 @@ export default function ExpensesScreen() {
     return labels[category];
   };
 
+  const getFlexibleDisplayCategory = (expense: FlexibleExpense) => {
+    if (expense.category === 'other' && expense.customCategoryName) {
+      return expense.customCategoryName;
+    }
+
+    return getFlexibleCategoryLabel(expense.category);
+  };
+
   const getAccountText = (
     accountType?: 'bank' | 'card' | 'cash',
     bankName?: string,
@@ -177,7 +226,7 @@ export default function ExpensesScreen() {
     if (accountType === 'cash') return 'Cash';
 
     if (accountType === 'card') {
-      return bankName ? `Card · ${bankName}` : 'Card';
+      return bankName ? `Credit Card · ${bankName}` : 'Credit Card';
     }
 
     if (accountType === 'bank') {
@@ -187,14 +236,32 @@ export default function ExpensesScreen() {
     return '';
   };
 
+  const handleDeleteFlexibleExpense = async (expense: FlexibleExpense) => {
+    Alert.alert(
+      'Delete Expense',
+      `Are you sure you want to delete "${expense.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteFlexibleExpense(expense.id);
+            await loadExpenses();
+          },
+        },
+      ],
+    );
+  };
+
   return (
-    <ScrollView style={globalStyles.container}>
+    <ScrollView
+      style={globalStyles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={globalStyles.header}>
         <Text style={globalStyles.title}>Expenses</Text>
-
-        <TouchableOpacity onPress={() => router.push('/add-flexible-expenses')}>
-          <Text style={styles.addButton}>Add</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.monthSelector}>
@@ -220,15 +287,27 @@ export default function ExpensesScreen() {
       </View>
 
       <View style={styles.overviewCard}>
-        <Text style={styles.overviewLabel}>Total Expenses</Text>
+        <View style={styles.overviewTopRow}>
+          <View>
+            <Text style={styles.overviewLabel}>Total Expenses</Text>
 
-        <Text style={styles.overviewAmount}>
-          £{formatCurrency(overview.total)}
-        </Text>
+            <Text style={styles.overviewAmount}>
+              £{formatCurrency(overview.total)}
+            </Text>
+          </View>
+
+          <View style={styles.monthPill}>
+            <Text style={styles.monthPillText}>
+              {selectedMonth.toLocaleDateString('en-GB', {
+                month: 'short',
+              })}
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.overviewBreakdown}>
           <View style={styles.breakdownItem}>
-            <Text style={styles.breakdownLabel}>Fixed</Text>
+            <Text style={styles.breakdownLabel}>Fixed Due</Text>
             <Text style={styles.breakdownValue}>
               £{formatCurrency(overview.fixedTotal)}
             </Text>
@@ -265,14 +344,16 @@ export default function ExpensesScreen() {
         <Text style={styles.sectionTitle}>Fixed Expenses</Text>
 
         <Text style={styles.sectionMeta}>
-          {activeFixedExpenses.length} active
+          {dueFixedExpenses.length} due
         </Text>
       </View>
 
-      {activeFixedExpenses.length === 0 ? (
-        <Text style={styles.emptyText}>No fixed expenses yet</Text>
+      {dueFixedExpenses.length === 0 ? (
+        <Text style={styles.emptyText}>
+          No fixed expenses due yet this month
+        </Text>
       ) : (
-        activeFixedExpenses.map((expense) => (
+        dueFixedExpenses.map((expense) => (
           <View key={expense.id} style={styles.expenseCard}>
             <View style={styles.itemLeft}>
               <Text style={styles.itemName} numberOfLines={1}>
@@ -280,10 +361,8 @@ export default function ExpensesScreen() {
               </Text>
 
               <Text style={styles.itemMeta} numberOfLines={1}>
-                {getFixedCategoryLabel(expense.category)}
-                {expense.paymentDayOfMonth
-                  ? ` · Day ${expense.paymentDayOfMonth}`
-                  : ''}
+                {formatFixedExpenseDate(expense)} ·{' '}
+                {getFixedDisplayCategory(expense)}
               </Text>
 
               {!!expense.bankName && (
@@ -326,7 +405,7 @@ export default function ExpensesScreen() {
 
               <Text style={styles.itemMeta} numberOfLines={1}>
                 {formatDate(expense.date)} ·{' '}
-                {getFlexibleCategoryLabel(expense.category)}
+                {getFlexibleDisplayCategory(expense)}
               </Text>
 
               <Text style={styles.itemMetaSmall} numberOfLines={1}>
@@ -334,9 +413,17 @@ export default function ExpensesScreen() {
               </Text>
             </View>
 
-            <Text style={styles.recordAmount}>
-              £{formatCurrency(expense.value)}
-            </Text>
+            <View style={styles.itemRight}>
+              <Text style={styles.recordAmount}>
+                £{formatCurrency(expense.value)}
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => handleDeleteFlexibleExpense(expense)}
+              >
+                <Text style={styles.deleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ))
       )}
@@ -406,14 +493,12 @@ export default function ExpensesScreen() {
 }
 
 const styles = StyleSheet.create({
-  addButton: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
+  content: {
+    paddingBottom: 32,
   },
 
   monthSelector: {
-    marginTop: 20,
+    marginTop: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -421,9 +506,9 @@ const styles = StyleSheet.create({
   },
 
   monthButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -433,12 +518,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 28,
     lineHeight: 30,
+    fontWeight: '700',
   },
 
   monthText: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
     minWidth: 150,
     textAlign: 'center',
   },
@@ -446,29 +532,48 @@ const styles = StyleSheet.create({
   overviewCard: {
     backgroundColor: colors.surface,
     borderRadius: 22,
-    padding: 20,
-    marginTop: 20,
+    padding: 18,
+    marginTop: 18,
+  },
+
+  overviewTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
 
   overviewLabel: {
     color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
 
   overviewAmount: {
     color: colors.text,
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: '900',
     marginTop: 8,
   },
 
-  overviewBreakdown: {
-    flexDirection: 'row',
-    marginTop: 18,
+  monthPill: {
     backgroundColor: colors.background,
     borderRadius: 16,
-    paddingVertical: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+
+  monthPillText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
+  overviewBreakdown: {
+    flexDirection: 'row',
+    marginTop: 16,
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    paddingVertical: 12,
     paddingHorizontal: 14,
   },
 
@@ -480,12 +585,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '700',
-    marginBottom: 5,
+    marginBottom: 4,
   },
 
   breakdownValue: {
     color: colors.text,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
   },
 
@@ -499,7 +604,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginTop: 14,
-    marginBottom: 18,
+    marginBottom: 20,
   },
 
   actionButton: {
@@ -531,7 +636,7 @@ const styles = StyleSheet.create({
   },
 
   sectionHeader: {
-    marginTop: 10,
+    marginTop: 8,
     marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -540,20 +645,20 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 21,
+    fontWeight: '800',
   },
 
   sectionMeta: {
     color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
 
   emptyText: {
     color: colors.textSecondary,
-    fontSize: 16,
-    marginTop: 10,
+    fontSize: 15,
+    marginTop: 8,
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -611,9 +716,16 @@ const styles = StyleSheet.create({
   },
 
   recordAmount: {
-    color: colors.primary,
+    color: colors.text,
     fontSize: 20,
     fontWeight: '900',
+  },
+  
+  deleteText: {
+    color: '#ff6b6b',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 6,
   },
 
   modalOverlay: {

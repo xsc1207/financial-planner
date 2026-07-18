@@ -5,6 +5,7 @@ export type GoalPlan = {
   target: number;
   deadline: string;
 };
+
 export type Goal = {
   id: string;
   name: string;
