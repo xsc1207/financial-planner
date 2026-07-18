@@ -6,15 +6,10 @@ const FLEXIBLE_EXPENSES_KEY = 'flexible_expenses';
 export type FixedExpenseCategory =
   | 'rent'
   | 'councilTax'
-  | 'electricity'
-  | 'gas'
-  | 'water'
+  | 'energy'
   | 'internet'
   | 'phone'
   | 'insurance'
-  | 'subscription'
-  | 'nursery'
-  | 'transport'
   | 'other';
 
 export type FlexibleExpenseCategory =
@@ -34,8 +29,11 @@ export type FixedExpense = {
 
   name: string;
   category: FixedExpenseCategory;
+  customCategoryName?: string;
 
   monthlyAmount: number;
+
+  paymentMethod?: 'directDebit' | 'manual';
   paymentDayOfMonth?: number;
 
   accountType: 'bank' | 'card';
@@ -51,6 +49,7 @@ export type FlexibleExpense = {
 
   name: string;
   category: FlexibleExpenseCategory;
+  customCategoryName?: string;
 
   value: number;
   date: string;
@@ -77,8 +76,11 @@ export const addFixedExpense = async (
 
     name: fixedExpense.name,
     category: fixedExpense.category,
+    customCategoryName: fixedExpense.customCategoryName,
 
     monthlyAmount: Number(fixedExpense.monthlyAmount) || 0,
+
+    paymentMethod: fixedExpense.paymentMethod || 'directDebit',
     paymentDayOfMonth: fixedExpense.paymentDayOfMonth
       ? Number(fixedExpense.paymentDayOfMonth)
       : undefined,
@@ -154,6 +156,7 @@ export const addFlexibleExpense = async (
 
     name: flexibleExpense.name,
     category: flexibleExpense.category,
+    customCategoryName: flexibleExpense.customCategoryName,
 
     value: Number(flexibleExpense.value) || 0,
     date: flexibleExpense.date || new Date().toISOString(),
